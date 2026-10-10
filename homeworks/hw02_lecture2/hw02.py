@@ -48,7 +48,7 @@ def format_report(rows):
         >>> format_report([('accuracy', 0.87654), ('loss', 0.12345)])
         'accuracy  : 0.8765\\nloss      : 0.1235'
     """
-    raise NotImplementedError
+    return '\n'.join(f'{name:<10}: {value:.4f}' for name, value in rows)
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ def normalize_tokens(text):
         >>> normalize_tokens('The cat, the CAT and the dog! The cat.')
         ['the', 'cat', 'and', 'dog']
     """
-    raise NotImplementedError
+    return list(dict.fromkeys(text.lower().translate(str.maketrans('', '', string.punctuation)).split()))
 
 
 # ---------------------------------------------------------------------------
@@ -95,7 +95,12 @@ def top_k(pairs, k):
         >>> top_k(scores, 0)
         []
     """
-    raise NotImplementedError
+    if k <= 0:
+        return []
+    sorted_pairs = sorted(pairs, key=lambda k: k[1], reverse=True)
+    if k >= len(sorted_pairs):
+        return sorted_pairs
+    return sorted_pairs[:k]
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +120,10 @@ def group_by_length(words):
         >>> group_by_length('the cat and the dog and the bird'.split())
         {3: ['the', 'cat', 'and', 'the', 'dog', 'and', 'the'], 4: ['bird']}
     """
-    raise NotImplementedError
+    result = {}
+    for word in words:
+        result.setdefault(len(word), []).append(word)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -133,7 +141,10 @@ def word_frequencies(text):
         >>> word_frequencies('the cat and the dog and the bird')
         {'the': 3, 'cat': 1, 'and': 2, 'dog': 1, 'bird': 1}
     """
-    raise NotImplementedError
+    result = {}
+    for word in text.split():
+        result[word] = result.get(word, 0) + 1
+    return result
 
 
 def common_words(freq_a, freq_b):
@@ -155,7 +166,7 @@ def common_words(freq_a, freq_b):
     то, сколько раз они встретились – 'b' и 'c' попадают в ответ,
     хотя их количества в freq_a и freq_b разные.
     """
-    raise NotImplementedError
+    return freq_a.keys() & freq_b.keys()
 
 
 # ---------------------------------------------------------------------------
@@ -174,7 +185,8 @@ def save_and_load_json(data, path):
         >>> save_and_load_json({'a': (1, 2, 3), 1: 'one'}, path)
         {'a': [1, 2, 3], '1': 'one'}
     """
-    raise NotImplementedError
+    json.dump(data, open(path, 'w', encoding='utf-8'), indent=4)
+    return json.load(open(path, encoding='utf-8'))
 
 
 # ---------------------------------------------------------------------------
@@ -200,7 +212,10 @@ def write_read_csv(rows, path):
         >>> write_read_csv(rows, path) == rows
         True
     """
-    raise NotImplementedError
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        csv.writer(f).writerows(rows)
+    with open(path, newline='', encoding='utf-8') as f:
+        return list(csv.reader(f))
 
 
 # ---------------------------------------------------------------------------
@@ -227,7 +242,16 @@ def calculate(op, a, b):
             ...
         ValueError: unsupported operation: %
     """
-    raise NotImplementedError
+    operations = {
+        '+': lambda a, b: a + b,
+        '-': lambda a, b: a - b,
+        '*': lambda a, b: a * b,
+        '/': lambda a, b: a / b,
+        '**': lambda a, b: a ** b,
+    }
+    if op not in operations:
+        raise ValueError(f'unsupported operation: {op}')
+    return operations[op](a, b)
 
 
 # ---------------------------------------------------------------------------
@@ -250,7 +274,9 @@ def moving_average(values, window):
         >>> moving_average([1, 2], 5)
         []
     """
-    raise NotImplementedError
+    if window > len(values) or window <= 0:
+        return []
+    return [sum(values[i: i+window]) / window for i in range(len(values) - window + 1)]
 
 
 # ---------------------------------------------------------------------------
@@ -279,4 +305,14 @@ def first_n_odd(iterable, n):
         >>> first_n_odd([1, 2, 3], 5)
         [1, 3]
     """
-    raise NotImplementedError
+    result = []
+    iterator = iter(iterable)
+    while n > 0:
+        try:
+            elem = next(iterator)
+        except StopIteration:
+            break
+        if elem % 2:
+            result.append(elem)
+            n -= 1
+    return result
